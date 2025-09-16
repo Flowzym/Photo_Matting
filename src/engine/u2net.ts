@@ -11,11 +11,8 @@ export async function ensureU2Net() {
     session = await ort.InferenceSession.create(url, { executionProviders: ['wasm'] })
     return session
   } catch (e:any) {
-    const msg = String(e?.message || e)
-    if (msg.includes('fetch') || msg.includes('no available backend')) {
-      throw new Error('ORT_UNAVAILABLE')
-    }
-    throw e
+    console.error('[U2NET] session create failed:', e)
+    throw new Error('ORT_UNAVAILABLE')
   }
 }
 
