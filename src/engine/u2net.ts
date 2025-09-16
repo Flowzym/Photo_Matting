@@ -3,18 +3,44 @@ import { createCanvas } from '@/utils/canvas'
 
 let session: any
 
+async function checkModelFile(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' })
+    console.log(`[U2NET] Model file check for ${url}:`, response.status, response.ok)
+    return response.ok
+  } catch (e) {
+    console.error(`[U2NET] Model file check failed for ${url}:`, e)
+    return false
+  }
+}
+
 export async function ensureU2Net() {
   if (session) return session
   const url = getBase + 'models/u2netp.onnx'
+  
+  console.log('[U2NET] Attempting to load model from:', url)
+  console.log('[U2NET] Base path:', getBase)
+  console.log('[U2NET] ORT available:', typeof ort !== 'undefined')
+  console.log('[U2NET] ORT.InferenceSession available:', typeof ort?.InferenceSession !== 'undefined')
+  
+  // Check if model file exists
+  const modelExists = await checkModelFile(url)
+  if (!modelExists) {
+    console.error('[U2NET] Model file not accessible at:', url)
+    throw new Error('MODEL_FILE_NOT_FOUND')
+  }
+  
   try {
     session = await ort.InferenceSession.create(url, { 
       executionProviders: ['wasm'],
       graphOptimizationLevel: 'all'
     })
+    console.log('[U2NET] Session created successfully')
     return session
   } catch (e:any) {
     console.error('[U2NET] session create failed:', e.message || e)
     console.error('[U2NET] attempted to load from:', url)
+    console.error('[U2NET] Full error:', e)
     throw new Error('ORT_UNAVAILABLE')
   }
 }
