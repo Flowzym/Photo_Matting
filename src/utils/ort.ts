@@ -5,8 +5,10 @@ const base = (import.meta as any).env?.BASE_URL || '/';
 export async function setupOrt() {
   // Serve ORT assets from /ort (or BASE_URL + 'ort')
   ort.env.wasm.wasmPaths = base + 'ort/'
-  ort.env.wasm.simd = true
+  ort.env.wasm.simd = false
   ort.env.wasm.proxy = false
+  ort.env.webgl.disabled = true
+  ort.env.webgpu.disabled = true
   if (!(globalThis as any).crossOriginIsolated) {
     ort.env.wasm.numThreads = 1
   }

@@ -61,7 +61,7 @@ export async function ensureU2Net() {
   
   try {
     session = await ort.InferenceSession.create(url, { 
-      executionProviders: ['wasm'],
+      executionProviders: [{ name: 'wasm', deviceType: 'cpu' }],
       graphOptimizationLevel: 'all'
     })
     console.log('[U2NET] Session created successfully')
