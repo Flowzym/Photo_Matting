@@ -1,11 +1,10 @@
-import { getOrt, getBase } from '@/utils/ort'
+import { ort, getBase } from '@/utils/ort'
 import { createCanvas } from '@/utils/canvas'
 
 let session: any
 
 export async function ensureU2Net() {
   if (session) return session
-  const ort = getOrt()
   const url = getBase() + 'models/u2netp.onnx'
   try {
     session = await ort.InferenceSession.create(url, { executionProviders: ['wasm'] })

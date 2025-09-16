@@ -11,3 +11,6 @@ export async function setupOrt() {
   return { backend: 'wasm', threads: ort.env.wasm.numThreads ?? 1, wasmPaths: ort.env.wasm.wasmPaths }
 }
 
+export { ort }
+export { base as getBase }
+export function getOrt() { return ort }
