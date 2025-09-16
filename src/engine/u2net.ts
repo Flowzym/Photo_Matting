@@ -1,4 +1,5 @@
 import { ort, getBase } from '@/utils/ort'
+import { setupOrt } from '@/utils/ort'
 import { createCanvas } from '@/utils/canvas'
 
 // Test if ORT is working at basic level
@@ -35,6 +36,9 @@ async function checkModelFile(url: string): Promise<boolean> {
 export async function ensureU2Net() {
   if (session) return session
   
+  // Setup ORT first
+  await setupOrt()
+  
   // First test if ORT is working at all
   const ortWorking = await testORT()
   if (!ortWorking) {
@@ -57,7 +61,8 @@ export async function ensureU2Net() {
   
   try {
     session = await ort.InferenceSession.create(url, { 
-      executionProviders: ['wasm']
+      executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all'
     })
     console.log('[U2NET] Session created successfully')
     return session

@@ -4,7 +4,9 @@ const base = (import.meta as any).env?.BASE_URL || '/';
 
 export async function setupOrt() {
   // Serve ORT assets from /ort (or BASE_URL + 'ort')
-  ort.env.wasm.wasmPaths = base + 'ort'
+  ort.env.wasm.wasmPaths = base + 'ort/'
+  ort.env.wasm.simd = true
+  ort.env.wasm.proxy = false
   if (!(globalThis as any).crossOriginIsolated) {
     ort.env.wasm.numThreads = 1
   }
