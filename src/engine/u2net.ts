@@ -7,10 +7,14 @@ export async function ensureU2Net() {
   if (session) return session
   const url = getBase + 'models/u2netp.onnx'
   try {
-    session = await ort.InferenceSession.create(url, { executionProviders: ['wasm'] })
+    session = await ort.InferenceSession.create(url, { 
+      executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all'
+    })
     return session
   } catch (e:any) {
-    console.error('[U2NET] session create failed:', e)
+    console.error('[U2NET] session create failed:', e.message || e)
+    console.error('[U2NET] attempted to load from:', url)
     throw new Error('ORT_UNAVAILABLE')
   }
 }
