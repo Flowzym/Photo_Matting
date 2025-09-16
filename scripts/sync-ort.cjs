@@ -4,6 +4,7 @@ const path = require('path');
 
 const PKG_ROOT = path.join(__dirname, '..', 'node_modules', 'onnxruntime-web');
 const DEST = path.join(__dirname, '..', 'public', 'ort');
+const WRONG = path.join(__dirname, '..', 'public', 'models'); // Schutz
 
 async function walk(dir) {
   const out = [];
@@ -17,13 +18,25 @@ async function walk(dir) {
 function find(files, re) { return files.find(f => re.test(f)) || null; }
 
 (async () => {
+  await fsp.mkdir(DEST, { recursive: true });
+
+  // 0) Aufräumen: falls versehentlich in models/ gelandet, rüber nach /ort
+  try {
+    const wrong = await fsp.readdir(WRONG);
+    for (const name of wrong) {
+      if (/^ort-wasm.*\.(mjs|js|wasm)$/.test(name)) {
+        await fsp.rename(path.join(WRONG, name), path.join(DEST, name));
+        console.log('[sync-ort] moved from models/ -> ort/:', name);
+      }
+    }
+  } catch {}
+
+  // 1) Dateien aus onnxruntime-web suchen/kopieren (robust)
   try { await fsp.access(PKG_ROOT); } catch {
-    console.error(`[sync-ort] onnxruntime-web nicht gefunden unter ${PKG_ROOT}. Erst "npm install" laufen lassen.`);
+    console.error('[sync-ort] onnxruntime-web nicht gefunden. Erst "npm install" ausführen.');
     process.exit(1);
   }
   const files = await walk(PKG_ROOT);
-  await fsp.mkdir(DEST, { recursive: true });
-
   const picks = {
     baseJS:  find(files, /dist[\\/](esm[\\/])?ort-wasm(\.min)?\.(mjs|js)$/) || find(files, /dist[\\/]ort(\.min)?\.js$/),
     baseWASM:find(files, /dist[\\/]ort-wasm\.wasm$/),
@@ -32,7 +45,6 @@ function find(files, re) { return files.find(f => re.test(f)) || null; }
     thJS:    find(files, /dist[\\/](esm[\\/])?ort-wasm-simd-threaded(\.min)?\.(mjs|js)$/),
     thWASM:  find(files, /dist[\\/]ort-wasm-simd-threaded\.wasm$/),
   };
-
   const plan = [
     ['ort-wasm.mjs', picks.baseJS],
     ['ort-wasm.wasm', picks.baseWASM],
@@ -41,39 +53,17 @@ function find(files, re) { return files.find(f => re.test(f)) || null; }
     ['ort-wasm-simd-threaded.mjs', picks.thJS],
     ['ort-wasm-simd-threaded.wasm', picks.thWASM],
   ];
-
-  const copied = [];
   const missing = [];
-
   for (const [target, src] of plan) {
-    if (src) {
-      await fsp.copyFile(src, path.join(DEST, target));
-      copied.push(`${target}`);
-    } else {
-      missing.push(target);
-    }
+    if (src) await fsp.copyFile(src, path.join(DEST, target));
+    else missing.push(target);
   }
-
-  // Last-resort: fehlen base/simd, dupliziere threaded als Platzhalter
+  // Fallback: fehlende Namen aus threaded duplizieren
   if (missing.length) {
-    if (picks.thJS) {
-      for (const name of ['ort-wasm.mjs','ort-wasm-simd.mjs']) {
-        if (missing.includes(name)) {
-          await fsp.copyFile(picks.thJS, path.join(DEST, name));
-          copied.push(`${name} [dup->threaded]`);
-        }
-      }
-    }
-    if (picks.thWASM) {
-      for (const name of ['ort-wasm.wasm','ort-wasm-simd.wasm']) {
-        if (missing.includes(name)) {
-          await fsp.copyFile(picks.thWASM, path.join(DEST, name));
-          copied.push(`${name} [dup->threaded]`);
-        }
-      }
-    }
+    if (picks.thJS) for (const n of ['ort-wasm.mjs','ort-wasm-simd.mjs'])
+      if (missing.includes(n)) await fsp.copyFile(picks.thJS, path.join(DEST, n));
+    if (picks.thWASM) for (const n of ['ort-wasm.wasm','ort-wasm-simd.wasm'])
+      if (missing.includes(n)) await fsp.copyFile(picks.thWASM, path.join(DEST, n));
   }
-
-  console.log('[sync-ort] ready:', copied.join(', '));
-  // Wichtig: nicht mit Fehlercode beenden, auch wenn etwas fehlte.
+  console.log('[sync-ort] ready in /public/ort');
 })();
