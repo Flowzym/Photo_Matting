@@ -1,6 +1,24 @@
 import { ort, getBase } from '@/utils/ort'
 import { createCanvas } from '@/utils/canvas'
 
+// Test if ORT is working at basic level
+async function testORT() {
+  try {
+    console.log('[U2NET] Testing basic ORT functionality...')
+    console.log('[U2NET] ORT object:', ort)
+    console.log('[U2NET] ORT.InferenceSession:', ort?.InferenceSession)
+    console.log('[U2NET] ORT.Tensor:', ort?.Tensor)
+    
+    // Try to create a simple tensor
+    const testTensor = new ort.Tensor('float32', new Float32Array([1, 2, 3, 4]), [2, 2])
+    console.log('[U2NET] Test tensor created successfully:', testTensor)
+    return true
+  } catch (e) {
+    console.error('[U2NET] Basic ORT test failed:', e)
+    return false
+  }
+}
+
 let session: any
 
 async function checkModelFile(url: string): Promise<boolean> {
@@ -16,6 +34,13 @@ async function checkModelFile(url: string): Promise<boolean> {
 
 export async function ensureU2Net() {
   if (session) return session
+  
+  // First test if ORT is working at all
+  const ortWorking = await testORT()
+  if (!ortWorking) {
+    throw new Error('ORT_BASIC_TEST_FAILED')
+  }
+  
   const url = getBase + 'models/u2netp.onnx'
   
   console.log('[U2NET] Attempting to load model from:', url)
@@ -32,15 +57,16 @@ export async function ensureU2Net() {
   
   try {
     session = await ort.InferenceSession.create(url, { 
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'all'
+      executionProviders: ['wasm']
     })
     console.log('[U2NET] Session created successfully')
     return session
   } catch (e:any) {
-    console.error('[U2NET] session create failed:', e.message || e)
+    console.error('[U2NET] Session create failed:', e)
     console.error('[U2NET] attempted to load from:', url)
-    console.error('[U2NET] Full error:', e)
+    console.error('[U2NET] Error type:', typeof e)
+    console.error('[U2NET] Error message:', e?.message)
+    console.error('[U2NET] Error stack:', e?.stack)
     throw new Error('ORT_UNAVAILABLE')
   }
 }
