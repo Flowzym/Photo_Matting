@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open('cvphoto-v1').then(cache => cache.addAll([
+  e.waitUntil(caches.open('cvphoto-v3').then(cache => cache.addAll([
     '/',
     '/index.html',
     '/manifest.webmanifest',
@@ -16,7 +16,7 @@ self.addEventListener('install', (e) => {
 });
 self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
-    const cache = await caches.open('cvphoto-v1');
+    const cache = await caches.open('cvphoto-v3');
     const cached = await cache.match(event.request);
     if (cached) return cached;
     try {

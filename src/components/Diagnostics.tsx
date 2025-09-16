@@ -8,7 +8,10 @@ export default function Diagnostics(){
   useEffect(()=>{
     setCoi(!!(globalThis as any).crossOriginIsolated)
     const files = ['ort-wasm.wasm','ort-wasm.mjs','ort-wasm-simd.wasm','ort-wasm-simd.mjs','ort-wasm-simd-threaded.wasm','ort-wasm-simd-threaded.mjs']
-    Promise.all(files.map(f=>fetch(base+'ort/'+f, { method:'HEAD' }).then(r=>r.ok).catch(()=>false)))
+    Promise.all(files.map(f=>{
+      const url = `${base}ort/${f}?v=${Date.now()}`;
+      return fetch(url, { method:'HEAD', cache:'no-store' }).then(r=>r.ok).catch(()=>false);
+    }))
       .then(bools=>{
         const m: Record<string, boolean> = {}
         files.forEach((f,i)=>m[f]=bools[i])
