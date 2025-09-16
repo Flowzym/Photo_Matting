@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { getBase } from '@/utils/ort'
 
 export default function Diagnostics(){
-  const base = getBase()
+  const base = getBase
   const [present, setPresent] = useState<Record<string, boolean>>({})
   const [coi, setCoi] = useState<boolean>(false)
   useEffect(()=>{
