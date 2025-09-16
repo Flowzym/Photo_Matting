@@ -76,7 +76,6 @@ function postprocess(mask: Float32Array, prep: any): ImageData {
 }
 
 export async function runU2Net(input: ImageData): Promise<ImageData> {
-  const ort = getOrt()
   const sess = await ensureU2Net()
   const prep = preprocess(input, 320)
   const tensor = new ort.Tensor('float32', prep.tensor, [1,3,prep.size,prep.size])
