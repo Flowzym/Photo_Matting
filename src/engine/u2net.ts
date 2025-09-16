@@ -5,7 +5,7 @@ let session: any
 
 export async function ensureU2Net() {
   if (session) return session
-  const url = getBase() + 'models/u2netp.onnx'
+  const url = getBase + 'models/u2netp.onnx'
   try {
     session = await ort.InferenceSession.create(url, { executionProviders: ['wasm'] })
     return session
